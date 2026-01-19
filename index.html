@@ -2,78 +2,69 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Poker Tracker</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <style>
 body{
-  font-family:-apple-system,Arial,sans-serif;
-  background:#0d1117;
-  color:#fff;
+  font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto;
+  background:#f2f2f7;
   margin:0;
-  padding:12px;
+  padding:15px;
 }
-h1,h2{ text-align:center; margin:14px 0; }
-
-button,input{
-  padding:8px;
-  font-size:15px;
-  border-radius:8px;
-  border:none;
+h1,h2{text-align:center;margin:10px 0;}
+.card{
+  background:#fff;
+  border-radius:14px;
+  padding:15px;
+  margin-bottom:20px;
+  box-shadow:0 4px 10px rgba(0,0,0,.06);
 }
-button{ cursor:pointer; }
-
 .player-row{
   display:flex;
   align-items:center;
-  margin:4px 0;
+  margin-bottom:10px;
 }
-.player-row span{ flex:1; font-weight:600; }
+.player-row img{
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  margin-right:10px;
+}
+.player-row span{
+  flex:1;
+  font-weight:600;
+}
 .player-row input{
-  width:60px;
-  text-align:center;
-}
-
-#error{
-  display:none;
-  background:#ef4444;
+  width:70px;
   padding:6px;
-  border-radius:6px;
-  text-align:center;
-  margin:6px 0;
+  font-size:16px;
+  text-align:right;
 }
-
-.fullBtn{
-  background:#14b8a6;
-  color:#000;
+button{
   width:100%;
-  margin-bottom:8px;
+  padding:12px;
+  border:none;
+  border-radius:10px;
+  background:#007aff;
+  color:#fff;
+  font-size:16px;
+  font-weight:600;
 }
-
-#gamesTableWrapper{
-  overflow-x:auto;
-  background:#1e293b;
-  border-radius:12px;
-  padding:6px;
-}
-
+button.danger{background:#ff3b30}
 table{
   width:100%;
   border-collapse:collapse;
-  min-width:720px;
+  font-size:14px;
 }
 th,td{
-  padding:6px;
+  padding:8px;
+  border-bottom:1px solid #ddd;
   text-align:center;
-  font-size:13px;
-  border-bottom:1px solid #334155;
 }
-
-.valueZero{ opacity:0.35; }
-.valuePositive{ color:#22c55e; font-weight:700; }
-.valueNegative{ color:#ef4444; font-weight:700; }
-
+.valueZero{opacity:0.35;}
+.valuePositive{color:#22c55e;font-weight:700;}
+.valueNegative{color:#ef4444;font-weight:700;}
 .badge{
   background:#facc15;
   color:#000;
@@ -82,14 +73,18 @@ th,td{
   font-size:11px;
   margin-left:4px;
 }
-
-.editBtn{ background:#3b82f6; color:#fff; }
-.delBtn{ background:#ef4444; color:#fff; }
-
-canvas{
-  background:#fff;
-  border-radius:12px;
-  margin-top:12px;
+.actions button{
+  width:auto;
+  padding:5px 8px;
+  font-size:12px;
+  margin:2px;
+}
+.player-img-small{
+  width:22px;
+  height:22px;
+  border-radius:50%;
+  vertical-align:middle;
+  margin-right:6px;
 }
 </style>
 </head>
@@ -98,194 +93,158 @@ canvas{
 
 <h1>♠️ Poker Tracker</h1>
 
-<button class="fullBtn" onclick="toggleFullscreen()">📱 Fullscreen</button>
-
-<h2>Nuova / Modifica partita</h2>
-<input type="date" id="date">
-
+<div class="card">
+<h2>Inserisci / Modifica partita</h2>
 <div id="inputs"></div>
-<div id="error">La somma deve essere 0</div>
-
-<button onclick="saveGame()" style="background:#22c55e;color:#000;width:100%">Salva partita</button>
-
-<h2>📋 Partite</h2>
-<div id="gamesTableWrapper">
-<table id="gamesTable">
-<thead>
-<tr>
-<th>Data</th>
-<th>Chirurgo</th>
-<th>Professore</th>
-<th>Barellista</th>
-<th>Anestesista</th>
-<th>Radiografo</th>
-<th>Caposala</th>
-<th>🏆</th>
-<th>Azioni</th>
-</tr>
-</thead>
-<tbody></tbody>
-</table>
+<button onclick="saveMatch()">Salva partita</button>
 </div>
 
-<h2>🏆 Classifica totale</h2>
-<table id="ranking"></table>
+<div class="card">
+<h2>Partite registrate</h2>
+<table id="matchesTable"></table>
+</div>
 
-<h2>📈 Andamento</h2>
+<div class="card">
+<h2>Classifica totale</h2>
+<table id="ranking"></table>
+</div>
+
+<div class="card">
+<h2>Andamento saldo cumulativo</h2>
 <canvas id="chart"></canvas>
+</div>
 
 <script>
 const players=[
-{name:"Chirurgo"},
-{name:"Professore"},
-{name:"Barellista"},
-{name:"Anestesista"},
-{name:"Radiografo"},
-{name:"Caposala"}
+{name:"Chirurgo",avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker/main/chirurgo.jpg"},
+{name:"Professore",avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker/main/professore.jpg"},
+{name:"Barellista",avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker/main/barellista.jpg"},
+{name:"Anestesista",avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker/main/anestesista.jpg"},
+{name:"Radiografo",avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker/main/radiografo.jpg"},
+{name:"Caposala",avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker/main/caposala.jpg"}
 ];
 
-let data=JSON.parse(localStorage.getItem("pokerData")||"[]");
+let matches=JSON.parse(localStorage.getItem("matches")||"[]");
 let editIndex=null;
+let chart;
 
 const inputs=document.getElementById("inputs");
 players.forEach(p=>{
-  inputs.innerHTML+=`
-  <div class="player-row">
-    <span>${p.name}</span>
-    <input type="number" id="${p.name}" value="0">
-  </div>`;
+inputs.innerHTML+=`
+<div class="player-row">
+<img src="${p.avatar}">
+<span>${p.name}</span>
+<input type="number" id="${p.name}" value="0">
+</div>`;
 });
 
-function saveGame(){
-  const date=document.getElementById("date").value;
-  if(!date){ alert("Inserisci la data"); return; }
-
-  let sum=0;
-  const temp=[];
-
-  players.forEach(p=>{
-    const val=parseInt(document.getElementById(p.name).value)||0;
-    sum+=val;
-    temp.push({date,player:p.name,value:val});
-  });
-
-  if(sum!==0){
-    error.style.display="block";
-    return;
-  }
-  error.style.display="none";
-
-  if(editIndex!==null){
-    data.splice(editIndex,players.length,...temp);
-    editIndex=null;
-  }else{
-    data.push(...temp);
-  }
-
-  localStorage.setItem("pokerData",JSON.stringify(data));
-  players.forEach(p=>document.getElementById(p.name).value=0);
-  render();
+function saveMatch(){
+let match={date:new Date().toLocaleString(),results:{}};
+let sum=0;
+players.forEach(p=>{
+let v=parseInt(document.getElementById(p.name).value)||0;
+match.results[p.name]=v;
+sum+=v;
+});
+if(sum!==0){alert("La somma deve essere 0");return;}
+if(editIndex!==null){
+matches[editIndex]=match;
+editIndex=null;
+}else{
+matches.push(match);
+}
+localStorage.setItem("matches",JSON.stringify(matches));
+renderAll();
+players.forEach(p=>document.getElementById(p.name).value=0);
 }
 
-function startEdit(index){
-  editIndex=index;
-  document.getElementById("date").value=data[index].date;
-  players.forEach((p,i)=>{
-    document.getElementById(p.name).value=data[index+i].value;
-  });
-  window.scrollTo({top:0,behavior:"smooth"});
-}
-
-function deleteGame(index){
-  if(confirm("Eliminare questa partita?")){
-    data.splice(index,players.length);
-    localStorage.setItem("pokerData",JSON.stringify(data));
-    render();
-  }
+function renderAll(){
+renderTable();
+renderRanking();
+renderChart();
 }
 
 function renderTable(){
-  const tbody=document.querySelector("#gamesTable tbody");
-  tbody.innerHTML="";
+const t=document.getElementById("matchesTable");
+let h="<tr><th>Data</th>";
+players.forEach(p=>h+=`<th>${p.name}</th>`);
+h+="<th>Azioni</th></tr>";
+matches.forEach((m,i)=>{
+let max=Math.max(...Object.values(m.results));
+h+=`<tr><td>${m.date}</td>`;
+players.forEach(p=>{
+let val=m.results[p.name];
+let cls=val===0?"valueZero":(val>0?"valuePositive":"valueNegative");
+let badge=(val===max && max>0) ? `<span class="badge">🏆</span>` : "";
+h+=`<td class="${cls}">${val}${badge}</td>`;
+});
+h+=`<td class="actions">
+<button onclick="editMatch(${i})">✏️</button>
+<button class="danger" onclick="deleteMatch(${i})">🗑️</button>
+</td></tr>`;
+});
+t.innerHTML=h;
+}
 
-  for(let i=0;i<data.length;i+=players.length){
-    const game=data.slice(i,i+players.length);
-    if(game.length<players.length) continue;
+function editMatch(i){
+editIndex=i;
+players.forEach(p=>{
+document.getElementById(p.name).value=matches[i].results[p.name];
+});
+window.scrollTo({top:0,behavior:"smooth"});
+}
 
-    const max=Math.max(...game.map(g=>g.value));
-
-    const tr=document.createElement("tr");
-    tr.innerHTML=`
-      <td>${game[0].date}</td>
-      ${game.map(g=>{
-        let cls=g.value===0?"valueZero":(g.value>0?"valuePositive":"valueNegative");
-        let badge=g.value===max && max>0 ? `<span class="badge">🏆</span>` : "";
-        return `<td class="${cls}">${g.value}${badge}</td>`;
-      }).join("")}
-      <td></td>
-      <td></td>
-    `;
-
-    const actions=tr.querySelectorAll("td")[8];
-    const e=document.createElement("button");
-    e.textContent="✏️";
-    e.className="editBtn";
-    e.onclick=()=>startEdit(i);
-    actions.appendChild(e);
-
-    const d=document.createElement("button");
-    d.textContent="🗑";
-    d.className="delBtn";
-    d.onclick=()=>deleteGame(i);
-    actions.appendChild(d);
-
-    tbody.appendChild(tr);
-  }
+function deleteMatch(i){
+if(confirm("Eliminare la partita?")){
+matches.splice(i,1);
+localStorage.setItem("matches",JSON.stringify(matches));
+renderAll();
+}
 }
 
 function renderRanking(){
-  const totals={};
-  players.forEach(p=>totals[p.name]=0);
-  data.forEach(d=>totals[d.player]+=d.value);
-
-  ranking.innerHTML="<tr><th>Giocatore</th><th>€</th></tr>";
-  Object.entries(totals).sort((a,b)=>b[1]-a[1]).forEach(r=>{
-    ranking.innerHTML+=`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`;
-  });
+let totals={};
+players.forEach(p=>totals[p.name]=0);
+matches.forEach(m=>{
+players.forEach(p=>totals[p.name]+=m.results[p.name]);
+});
+let r=Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+let h="<tr><th>Giocatore</th><th>Saldo</th></tr>";
+r.forEach(e=>{
+let pl=players.find(p=>p.name===e[0]);
+h+=`<tr class="${e[1]>0?'win':''}">
+<td><img src="${pl.avatar}" class="player-img-small">${e[0]}</td>
+<td>${e[1]}</td></tr>`;
+});
+ranking.innerHTML=h;
 }
 
 function renderChart(){
-  const labels=[...new Set(data.map(d=>d.date))];
-  const datasets=players.map(p=>{
-    let sum=0;
-    return{
-      label:p.name,
-      data:labels.map(l=>{
-        data.filter(d=>d.player===p.name && d.date<=l).forEach(d=>sum+=d.value);
-        return sum;
-      }),
-      borderWidth:2
-    };
-  });
-  new Chart(chart,{type:"line",data:{labels,datasets}});
+let labels=matches.map((_,i)=>"P"+(i+1));
+let datasets=players.map(p=>{
+let sum=0;
+return{
+label:p.name,
+data:matches.map(m=>{
+sum+=m.results[p.name];
+return sum;
+}),
+borderWidth:2
+};
+});
+if(chart) chart.destroy();
+chart=new Chart(document.getElementById("chart"),{
+type:"line",
+data:{labels,datasets},
+options:{
+responsive:true,
+plugins:{legend:{position:"bottom"}},
+scales:{y:{beginAtZero:true}}
+}
+});
 }
 
-function toggleFullscreen(){
-  if(!document.fullscreenElement){
-    document.documentElement.requestFullscreen();
-  }else{
-    document.exitFullscreen();
-  }
-}
-
-function render(){
-  renderTable();
-  renderRanking();
-  renderChart();
-}
-
-render();
+renderAll();
 </script>
-
 </body>
 </html>
