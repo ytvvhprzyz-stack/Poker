@@ -14,7 +14,7 @@ body {
   padding:16px;
 }
 h1,h2 { text-align:center; margin-top:24px; }
-input,button {
+input,button,select {
   padding:10px;
   margin:6px 0;
   border-radius:10px;
@@ -22,14 +22,36 @@ input,button {
   font-size:16px;
 }
 button { background:#22c55e; color:#fff; font-weight:600; }
-table { width:100%; margin-top:10px; border-collapse:collapse; }
-th,td { padding:8px; text-align:center; border-bottom:1px solid #334155; }
+#gamesTableWrapper {
+  overflow-x:auto;
+  margin-top:10px;
+  border-radius:12px;
+  background:#1e293b;
+  padding:6px;
+}
+#gamesTable {
+  width:100%;
+  border-collapse:collapse;
+  table-layout:auto;
+  min-width:600px;
+}
+#gamesTable th, #gamesTable td {
+  padding:8px;
+  text-align:center;
+  border-bottom:1px solid #334155;
+  font-size:14px;
+}
+#gamesTable td.valuePositive { color:#22c55e; font-weight:600; }
+#gamesTable td.valueNegative { color:#ef4444; font-weight:600; }
+#gamesTable button { font-size:12px; padding:3px 6px; border-radius:6px; }
+
 canvas { background:#fff; border-radius:12px; padding:10px; margin-top:16px; }
 .player-row { display:flex; align-items:center; margin:6px 0; }
 .player-row img { width:40px; height:40px; border-radius:50%; margin-right:10px; }
 .player-row span { flex:1; font-weight:600; font-size:16px; }
 .player-row input[type=number] { width:70px; text-align:center; font-size:16px; margin-left:auto; }
 #error { background:#ef4444; color:#fff; padding:8px; border-radius:8px; margin-top:8px; display:none; text-align:center; }
+#editForm { display:none; background:#1e293b; padding:10px; border-radius:12px; margin-top:10px; }
 </style>
 </head>
 <body>
@@ -38,10 +60,29 @@ canvas { background:#fff; border-radius:12px; padding:10px; margin-top:16px; }
 
 <h2>Inserisci partita</h2>
 <input type="date" id="date">
-
 <div id="inputs"></div>
 <div id="error">Errore: La somma dei € deve essere 0!</div>
 <button onclick="saveGame()">Salva partita</button>
+
+<h2>📊 Partite registrate</h2>
+<div id="gamesTableWrapper">
+<table id="gamesTable">
+<tr>
+  <th>Data</th>
+  <th>Giocatore</th>
+  <th>€</th>
+  <th>Azioni</th>
+</tr>
+</table>
+</div>
+
+<div id="editForm">
+<h3>Modifica partita</h3>
+<input type="date" id="editDate">
+<div id="editInputs"></div>
+<button onclick="saveEdit()">Salva modifica</button>
+<button onclick="cancelEdit()" style="background:#ef4444;">Annulla</button>
+</div>
 
 <h2>🏆 Classifica totale (€)</h2>
 <table id="ranking"></table>
@@ -50,19 +91,18 @@ canvas { background:#fff; border-radius:12px; padding:10px; margin-top:16px; }
 <canvas id="chart"></canvas>
 
 <script>
-// Giocatori con link raw GitHub corretto
 const players=[
-  {name:"Chirurgo", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker/main/chirurgo.jpg"},
-  {name:"Professore", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker/main/professore.jpg"},
-  {name:"Barellista", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker/main/barellista.jpg"},
-  {name:"Anestesista", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker/main/anestesista.jpg"},
-  {name:"Radiografo", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker/main/radiografo.jpg"},
-  {name:"Caposala", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker/main/caposala.jpg"}
+  {name:"Chirurgo", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker-tracker/main/chirurgo.png?v=1"},
+  {name:"Professore", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker-tracker/main/professore.png?v=1"},
+  {name:"Barellista", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker-tracker/main/barellista.png?v=1"},
+  {name:"Anestesista", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker-tracker/main/anestesista.jpg?v=1"},
+  {name:"Radiografo", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker-tracker/main/radiografo.jpg?v=1"},
+  {name:"Caposala", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker-tracker/main/caposala.jpg?v=1"}
 ];
 
 let data=JSON.parse(localStorage.getItem("pokerData")||"[]");
+let editIndex=null;
 
-// Creazione input per ogni giocatore
 const inputsDiv=document.getElementById("inputs");
 players.forEach(p=>{
   inputsDiv.innerHTML+=`
@@ -73,7 +113,21 @@ players.forEach(p=>{
   </div>`;
 });
 
-// Funzione per salvare partita
+function createEditInputs(gameIndex){
+  const editInputsDiv=document.getElementById("editInputs");
+  editInputsDiv.innerHTML="";
+  const gameData=data.slice(gameIndex,gameIndex+players.length);
+  players.forEach(p=>{
+    const record=gameData.find(d=>d.player===p.name);
+    editInputsDiv.innerHTML+=`
+    <div class="player-row">
+      <img src="${p.avatar}" alt="${p.name}">
+      <span>${p.name}</span>
+      <input type="number" id="edit_${p.name}" value="${record?record.value:0}">
+    </div>`;
+  });
+}
+
 function saveGame(){
   const date=document.getElementById("date").value;
   let sum=0;
@@ -86,24 +140,24 @@ function saveGame(){
       tempData.push({date,player:p.name,value:intVal});
     }
   });
-  if(sum!==0){
-    document.getElementById("error").style.display="block";
-    return;
-  } else {
-    document.getElementById("error").style.display="none";
-  }
+  if(sum!==0){ document.getElementById("error").style.display="block"; return; }
+  document.getElementById("error").style.display="none";
   data.push(...tempData);
   localStorage.setItem("pokerData",JSON.stringify(data));
   players.forEach(p=>document.getElementById(p.name).value="");
   render();
 }
 
-// Funzione per aggiornare classifica e grafico
 function render(){
+  renderRanking();
+  renderChart();
+  renderTable();
+}
+
+function renderRanking(){
   const totals={};
   players.forEach(p=>totals[p.name]=0);
   data.forEach(d=>totals[d.player]+=d.value);
-
   const rank=document.getElementById("ranking");
   rank.innerHTML="<tr><th>Giocatore</th><th>€</th></tr>";
   Object.entries(totals).sort((a,b)=>b[1]-a[1]).forEach(r=>{
@@ -113,7 +167,9 @@ function render(){
       <td>${r[1]}</td>
     </tr>`;
   });
+}
 
+function renderChart(){
   const labels=[...new Set(data.map(d=>d.date))];
   const datasets=players.map((p,i)=>{
     let sum=0;
@@ -129,12 +185,67 @@ function render(){
       tension:0.3
     };
   });
-
   new Chart(document.getElementById("chart"),{
     type:"line",
     data:{labels,datasets},
     options:{responsive:true, plugins:{legend:{position:'bottom'}}}
   });
+}
+
+function renderTable(){
+  const table=document.getElementById("gamesTable");
+  table.innerHTML="<tr><th>Data</th><th>Giocatore</th><th>€</th><th>Azioni</th></tr>";
+  for(let i=0;i<data.length;i+=players.length){
+    const gameData=data.slice(i,i+players.length);
+    gameData.forEach(d=>{
+      table.innerHTML+=`<tr>
+        <td>${d.date}</td>
+        <td>${d.player}</td>
+        <td class="${d.value>=0?'valuePositive':'valueNegative'}">${d.value}</td>
+        <td>
+          <button onclick="startEdit(${i})">Modifica</button>
+          <button onclick="deleteGame(${i})" style="background:#ef4444;">Elimina</button>
+        </td>
+      </tr>`;
+    });
+  }
+}
+
+function startEdit(index){
+  editIndex=index;
+  document.getElementById("editForm").style.display="block";
+  document.getElementById("editDate").value=data[index].date;
+  createEditInputs(index);
+}
+
+function saveEdit(){
+  const date=document.getElementById("editDate").value;
+  let sum=0;
+  const tempData=[];
+  players.forEach(p=>{
+    const val=document.getElementById("edit_"+p.name).value;
+    const intVal=parseInt(val);
+    sum+=intVal;
+    tempData.push({date,player:p.name,value:intVal});
+  });
+  if(sum!==0){ alert("Errore: La somma dei € deve essere 0!"); return; }
+  data.splice(editIndex, players.length, ...tempData);
+  localStorage.setItem("pokerData",JSON.stringify(data));
+  cancelEdit();
+  render();
+}
+
+function cancelEdit(){
+  editIndex=null;
+  document.getElementById("editForm").style.display="none";
+}
+
+function deleteGame(index){
+  if(confirm("Sei sicuro di voler eliminare questa partita?")){
+    data.splice(index, players.length);
+    localStorage.setItem("pokerData",JSON.stringify(data));
+    render();
+  }
 }
 
 render();
