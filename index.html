@@ -198,6 +198,7 @@ function renderChart(){
 function renderTable(){
   const table=document.getElementById("gamesTable");
   table.innerHTML="<tr><th>Data</th><th>Giocatore</th><th>€</th><th>Azioni</th></tr>";
+
   for(let i=0;i<data.length;i+=players.length){
     const gameData=data.slice(i,i+players.length);
     gameData.forEach((d,j)=>{
@@ -208,7 +209,10 @@ function renderTable(){
         <td class="${d.value>=0?'valuePositive':'valueNegative'}">${d.value}</td>
         <td></td>
       `;
+
       const tdActions=tr.querySelector("td:last-child");
+
+      // Usa l'indice corretto della partita
       const btnEdit=document.createElement("button");
       btnEdit.textContent="Modifica";
       btnEdit.className="editBtn";
