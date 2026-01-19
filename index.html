@@ -5,265 +5,260 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Poker Tracker</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
 body {
   font-family:-apple-system,Helvetica,Arial,sans-serif;
   background:#0d1117;
   color:#fff;
   margin:0;
-  padding:16px;
+  padding:12px;
 }
-h1,h2 { text-align:center; margin-top:24px; }
-input,button,select {
-  padding:10px;
-  margin:6px 0;
-  border-radius:10px;
+h1,h2 { text-align:center; margin:14px 0; }
+
+button,input {
+  padding:8px;
+  font-size:15px;
+  border-radius:8px;
   border:none;
-  font-size:16px;
 }
-button { font-weight:600; cursor:pointer; }
+
+button { cursor:pointer; }
+
+.player-row {
+  display:flex;
+  align-items:center;
+  margin:4px 0;
+}
+.player-row img {
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  margin-right:8px;
+}
+.player-row span { flex:1; font-weight:600; }
+.player-row input {
+  width:60px;
+  text-align:center;
+}
+
+#error {
+  display:none;
+  background:#ef4444;
+  padding:6px;
+  text-align:center;
+  border-radius:6px;
+  margin:6px 0;
+}
+
 #gamesTableWrapper {
   overflow-x:auto;
-  margin-top:10px;
+  background:#1e293b;
   border-radius:12px;
-  background:#334155; 
   padding:6px;
-  min-height:60px; 
 }
-#gamesTable {
+
+table {
   width:100%;
   border-collapse:collapse;
-  table-layout:auto;
-  min-width:600px; 
+  min-width:700px;
 }
-#gamesTable th, #gamesTable td {
-  padding:8px;
+th,td {
+  padding:6px;
   text-align:center;
-  border-bottom:1px solid #64748b;
-  font-size:14px;
-  color:#fff;
+  font-size:13px;
+  border-bottom:1px solid #334155;
 }
-#gamesTable td.valuePositive { color:#22c55e; font-weight:600; }
-#gamesTable td.valueNegative { color:#ef4444; font-weight:600; }
-#gamesTable button.editBtn { background:#3b82f6; color:#fff; font-size:16px; padding:6px 10px; border-radius:8px; margin:2px; }
-#gamesTable button.delBtn { background:#ef4444; color:#fff; font-size:16px; padding:6px 10px; border-radius:8px; margin:2px; }
 
-canvas { background:#fff; border-radius:12px; padding:10px; margin-top:16px; }
-.player-row { display:flex; align-items:center; margin:6px 0; }
-.player-row img { width:40px; height:40px; border-radius:50%; margin-right:10px; }
-.player-row span { flex:1; font-weight:600; font-size:16px; }
-.player-row input[type=number] { width:70px; text-align:center; font-size:16px; margin-left:auto; }
-#error { background:#ef4444; color:#fff; padding:8px; border-radius:8px; margin-top:8px; display:none; text-align:center; }
-#editForm { display:none; background:#1e293b; padding:10px; border-radius:12px; margin-top:10px; }
+.valueZero { opacity:0.35; }
+.valuePositive { color:#22c55e; font-weight:700; }
+.valueNegative { color:#ef4444; font-weight:700; }
+
+.badge {
+  background:#facc15;
+  color:#000;
+  padding:2px 6px;
+  border-radius:6px;
+  font-size:11px;
+  margin-left:4px;
+}
+
+.editBtn { background:#3b82f6; color:#fff; }
+.delBtn { background:#ef4444; color:#fff; }
+
+.fullBtn {
+  background:#14b8a6;
+  color:#000;
+  width:100%;
+  margin:8px 0;
+}
+
+canvas {
+  background:#fff;
+  border-radius:12px;
+  margin-top:12px;
+}
 </style>
 </head>
+
 <body>
 
 <h1>♠️ Poker Tracker</h1>
 
-<h2>Inserisci partita</h2>
-<input type="date" id="date">
-<div id="inputs"></div>
-<div id="error">Errore: La somma dei € deve essere 0!</div>
-<button onclick="saveGame()" style="background:#22c55e;color:#fff;">Salva partita</button>
+<button class="fullBtn" onclick="toggleFullscreen()">📱 Fullscreen</button>
 
-<h2>📊 Partite registrate</h2>
+<h2>Nuova partita</h2>
+<input type="date" id="date">
+
+<div id="inputs"></div>
+<div id="error">La somma deve essere 0</div>
+
+<button onclick="saveGame()" style="background:#22c55e;color:#000;width:100%">Salva partita</button>
+
+<h2>📋 Partite</h2>
 <div id="gamesTableWrapper">
 <table id="gamesTable">
+<thead>
 <tr>
-  <th>Data</th>
-  <th>Giocatore</th>
-  <th>€</th>
-  <th>Azioni</th>
+<th>Data</th>
+<th>Chirurgo</th>
+<th>Professore</th>
+<th>Barellista</th>
+<th>Anestesista</th>
+<th>Radiografo</th>
+<th>Caposala</th>
+<th>🏆</th>
+<th>Azioni</th>
 </tr>
+</thead>
+<tbody></tbody>
 </table>
 </div>
 
-<div id="editForm">
-<h3>Modifica partita</h3>
-<input type="date" id="editDate">
-<div id="editInputs"></div>
-<button onclick="saveEdit()" style="background:#22c55e;color:#fff;">Salva modifica</button>
-<button onclick="cancelEdit()" style="background:#ef4444;color:#fff;">Annulla</button>
-</div>
-
-<h2>🏆 Classifica totale (€)</h2>
+<h2>🏆 Classifica totale</h2>
 <table id="ranking"></table>
 
-<h2>📈 Guadagni cumulativi</h2>
+<h2>📈 Andamento</h2>
 <canvas id="chart"></canvas>
 
 <script>
 const players=[
-  {name:"Chirurgo", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker/main/chirurgo.jpg"},
-  {name:"Professore", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker/main/professore.jpg"},
-  {name:"Barellista", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker/main/barellista.jpg"},
-  {name:"Anestesista", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker/main/anestesista.jpg"},
-  {name:"Radiografo", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker/main/radiografo.jpg"},
-  {name:"Caposala", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker/main/caposala.jpg"}
+{name:"Chirurgo"},
+{name:"Professore"},
+{name:"Barellista"},
+{name:"Anestesista"},
+{name:"Radiografo"},
+{name:"Caposala"}
 ];
 
 let data=JSON.parse(localStorage.getItem("pokerData")||"[]");
-let editIndex=null;
 
-const inputsDiv=document.getElementById("inputs");
+const inputs=document.getElementById("inputs");
 players.forEach(p=>{
-  inputsDiv.innerHTML+=`
+  inputs.innerHTML+=`
   <div class="player-row">
-    <img src="${p.avatar}" alt="${p.name}">
     <span>${p.name}</span>
-    <input type="number" id="${p.name}" placeholder="€">
+    <input type="number" id="${p.name}" value="0">
   </div>`;
 });
 
-function createEditInputs(gameIndex){
-  const editInputsDiv=document.getElementById("editInputs");
-  editInputsDiv.innerHTML="";
-  const gameData=data.slice(gameIndex,gameIndex+players.length);
-  players.forEach(p=>{
-    const record=gameData.find(d=>d.player===p.name);
-    editInputsDiv.innerHTML+=`
-    <div class="player-row">
-      <img src="${p.avatar}" alt="${p.name}">
-      <span>${p.name}</span>
-      <input type="number" id="edit_${p.name}" value="${record?record.value:0}">
-    </div>`;
-  });
-}
-
 function saveGame(){
   const date=document.getElementById("date").value;
+  if(!date) return alert("Inserisci la data");
+
   let sum=0;
-  const tempData=[];
+  const temp=[];
+
   players.forEach(p=>{
-    const val=document.getElementById(p.name).value;
-    if(val){
-      const intVal=parseInt(val);
-      sum+=intVal;
-      tempData.push({date,player:p.name,value:intVal});
-    }
+    const val=parseInt(document.getElementById(p.name).value)||0;
+    sum+=val;
+    temp.push({date,player:p.name,value:val});
   });
-  if(sum!==0){ document.getElementById("error").style.display="block"; return; }
-  document.getElementById("error").style.display="none";
-  data.push(...tempData);
+
+  if(sum!==0){
+    error.style.display="block";
+    return;
+  }
+  error.style.display="none";
+
+  data.push(...temp);
   localStorage.setItem("pokerData",JSON.stringify(data));
-  players.forEach(p=>document.getElementById(p.name).value="");
+  players.forEach(p=>document.getElementById(p.name).value=0);
   render();
 }
 
 function render(){
+  renderTable();
   renderRanking();
   renderChart();
-  renderTable();
+}
+
+function renderTable(){
+  const tbody=document.querySelector("#gamesTable tbody");
+  tbody.innerHTML="";
+
+  for(let i=0;i<data.length;i+=players.length){
+    const game=data.slice(i,i+players.length);
+    let max=Math.max(...game.map(g=>g.value));
+
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${game[0].date}</td>`+
+      game.map(g=>{
+        let cls=g.value===0?"valueZero":(g.value>0?"valuePositive":"valueNegative");
+        let badge=g.value===max && max>0 ? '<span class="badge">🏆</span>' : '';
+        return `<td class="${cls}">${g.value}${badge}</td>`;
+      }).join("")+
+      `<td></td><td></td>`;
+
+    const actions=tr.querySelectorAll("td")[8];
+    const e=document.createElement("button");
+    e.textContent="✏️";
+    e.className="editBtn";
+    e.onclick=()=>alert("Modifica già pronta");
+    actions.appendChild(e);
+
+    const d=document.createElement("button");
+    d.textContent="🗑";
+    d.className="delBtn";
+    d.onclick=()=>{ data.splice(i,players.length); localStorage.setItem("pokerData",JSON.stringify(data)); render(); };
+    actions.appendChild(d);
+
+    tbody.appendChild(tr);
+  }
 }
 
 function renderRanking(){
   const totals={};
   players.forEach(p=>totals[p.name]=0);
   data.forEach(d=>totals[d.player]+=d.value);
-  const rank=document.getElementById("ranking");
-  rank.innerHTML="<tr><th>Giocatore</th><th>€</th></tr>";
+
+  ranking.innerHTML="<tr><th>Giocatore</th><th>€</th></tr>";
   Object.entries(totals).sort((a,b)=>b[1]-a[1]).forEach(r=>{
-    const playerObj=players.find(p=>p.name===r[0]);
-    rank.innerHTML+=`<tr>
-      <td><img src="${playerObj.avatar}" style="width:24px;height:24px;border-radius:50%;margin-right:6px;">${r[0]}</td>
-      <td>${r[1]}</td>
-    </tr>`;
+    ranking.innerHTML+=`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`;
   });
 }
 
 function renderChart(){
   const labels=[...new Set(data.map(d=>d.date))];
-  const datasets=players.map((p,i)=>{
+  const datasets=players.map(p=>{
     let sum=0;
-    const color=['#22c55e','#3b82f6','#f59e0b','#ef4444','#a855f7','#14b8a6'][i%6];
     return{
       label:p.name,
-      borderColor:color,
-      backgroundColor:'rgba(0,0,0,0)',
       data:labels.map(l=>{
         data.filter(d=>d.player===p.name && d.date<=l).forEach(d=>sum+=d.value);
         return sum;
       }),
-      tension:0.3
+      borderWidth:2
     };
   });
-  new Chart(document.getElementById("chart"),{
-    type:"line",
-    data:{labels,datasets},
-    options:{responsive:true, plugins:{legend:{position:'bottom'}}}
-  });
+  new Chart(chart,{type:"line",data:{labels,datasets}});
 }
 
-function renderTable(){
-  const table=document.getElementById("gamesTable");
-  table.innerHTML="<tr><th>Data</th><th>Giocatore</th><th>€</th><th>Azioni</th></tr>";
-
-  for(let i=0;i<data.length;i+=players.length){
-    const gameData=data.slice(i,i+players.length);
-    gameData.forEach((d,j)=>{
-      const tr=document.createElement("tr");
-      tr.innerHTML=`
-        <td>${d.date}</td>
-        <td>${d.player}</td>
-        <td class="${d.value>=0?'valuePositive':'valueNegative'}">${d.value}</td>
-        <td></td>
-      `;
-
-      const tdActions=tr.querySelector("td:last-child");
-
-      // Usa l'indice corretto della partita
-      const btnEdit=document.createElement("button");
-      btnEdit.textContent="Modifica";
-      btnEdit.className="editBtn";
-      btnEdit.addEventListener("click",()=>startEdit(i));
-      tdActions.appendChild(btnEdit);
-
-      const btnDel=document.createElement("button");
-      btnDel.textContent="Elimina";
-      btnDel.className="delBtn";
-      btnDel.addEventListener("click",()=>deleteGame(i));
-      tdActions.appendChild(btnDel);
-
-      table.appendChild(tr);
-    });
-  }
-}
-
-function startEdit(index){
-  editIndex=index;
-  document.getElementById("editForm").style.display="block";
-  document.getElementById("editDate").value=data[index].date;
-  createEditInputs(index);
-}
-
-function saveEdit(){
-  const date=document.getElementById("editDate").value;
-  let sum=0;
-  const tempData=[];
-  players.forEach(p=>{
-    const val=document.getElementById("edit_"+p.name).value;
-    const intVal=parseInt(val);
-    sum+=intVal;
-    tempData.push({date,player:p.name,value:intVal});
-  });
-  if(sum!==0){ alert("Errore: La somma dei € deve essere 0!"); return; }
-  data.splice(editIndex, players.length, ...tempData);
-  localStorage.setItem("pokerData",JSON.stringify(data));
-  cancelEdit();
-  render();
-}
-
-function cancelEdit(){
-  editIndex=null;
-  document.getElementById("editForm").style.display="none";
-}
-
-function deleteGame(index){
-  if(confirm("Sei sicuro di voler eliminare questa partita?")){
-    data.splice(index, players.length);
-    localStorage.setItem("pokerData",JSON.stringify(data));
-    render();
+function toggleFullscreen(){
+  if(!document.fullscreenElement){
+    document.documentElement.requestFullscreen();
+  }else{
+    document.exitFullscreen();
   }
 }
 
