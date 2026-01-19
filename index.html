@@ -45,8 +45,8 @@ button { font-weight:600; cursor:pointer; }
 }
 #gamesTable td.valuePositive { color:#22c55e; font-weight:600; }
 #gamesTable td.valueNegative { color:#ef4444; font-weight:600; }
-#gamesTable button.editBtn { background:#3b82f6; color:#fff; font-size:14px; padding:4px 8px; border-radius:6px; margin:1px; }
-#gamesTable button.delBtn { background:#ef4444; color:#fff; font-size:14px; padding:4px 8px; border-radius:6px; margin:1px; }
+#gamesTable button.editBtn { background:#3b82f6; color:#fff; font-size:16px; padding:6px 10px; border-radius:8px; margin:2px; }
+#gamesTable button.delBtn { background:#ef4444; color:#fff; font-size:16px; padding:6px 10px; border-radius:8px; margin:2px; }
 
 canvas { background:#fff; border-radius:12px; padding:10px; margin-top:16px; }
 .player-row { display:flex; align-items:center; margin:6px 0; }
@@ -200,16 +200,28 @@ function renderTable(){
   table.innerHTML="<tr><th>Data</th><th>Giocatore</th><th>€</th><th>Azioni</th></tr>";
   for(let i=0;i<data.length;i+=players.length){
     const gameData=data.slice(i,i+players.length);
-    gameData.forEach(d=>{
-      table.innerHTML+=`<tr>
+    gameData.forEach((d,j)=>{
+      const tr=document.createElement("tr");
+      tr.innerHTML=`
         <td>${d.date}</td>
         <td>${d.player}</td>
         <td class="${d.value>=0?'valuePositive':'valueNegative'}">${d.value}</td>
-        <td>
-          <button class="editBtn" onclick="startEdit(${i})">Modifica</button>
-          <button class="delBtn" onclick="deleteGame(${i})">Elimina</button>
-        </td>
-      </tr>`;
+        <td></td>
+      `;
+      const tdActions=tr.querySelector("td:last-child");
+      const btnEdit=document.createElement("button");
+      btnEdit.textContent="Modifica";
+      btnEdit.className="editBtn";
+      btnEdit.addEventListener("click",()=>startEdit(i));
+      tdActions.appendChild(btnEdit);
+
+      const btnDel=document.createElement("button");
+      btnDel.textContent="Elimina";
+      btnDel.className="delBtn";
+      btnDel.addEventListener("click",()=>deleteGame(i));
+      tdActions.appendChild(btnDel);
+
+      table.appendChild(tr);
     });
   }
 }
