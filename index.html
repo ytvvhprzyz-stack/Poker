@@ -21,29 +21,32 @@ input,button,select {
   border:none;
   font-size:16px;
 }
-button { background:#22c55e; color:#fff; font-weight:600; }
+button { font-weight:600; cursor:pointer; }
 #gamesTableWrapper {
   overflow-x:auto;
   margin-top:10px;
   border-radius:12px;
-  background:#1e293b;
+  background:#334155; 
   padding:6px;
+  min-height:60px; 
 }
 #gamesTable {
   width:100%;
   border-collapse:collapse;
   table-layout:auto;
-  min-width:600px;
+  min-width:600px; 
 }
 #gamesTable th, #gamesTable td {
   padding:8px;
   text-align:center;
-  border-bottom:1px solid #334155;
+  border-bottom:1px solid #64748b;
   font-size:14px;
+  color:#fff;
 }
 #gamesTable td.valuePositive { color:#22c55e; font-weight:600; }
 #gamesTable td.valueNegative { color:#ef4444; font-weight:600; }
-#gamesTable button { font-size:12px; padding:3px 6px; border-radius:6px; }
+#gamesTable button.editBtn { background:#3b82f6; color:#fff; font-size:14px; padding:4px 8px; border-radius:6px; margin:1px; }
+#gamesTable button.delBtn { background:#ef4444; color:#fff; font-size:14px; padding:4px 8px; border-radius:6px; margin:1px; }
 
 canvas { background:#fff; border-radius:12px; padding:10px; margin-top:16px; }
 .player-row { display:flex; align-items:center; margin:6px 0; }
@@ -62,7 +65,7 @@ canvas { background:#fff; border-radius:12px; padding:10px; margin-top:16px; }
 <input type="date" id="date">
 <div id="inputs"></div>
 <div id="error">Errore: La somma dei € deve essere 0!</div>
-<button onclick="saveGame()">Salva partita</button>
+<button onclick="saveGame()" style="background:#22c55e;color:#fff;">Salva partita</button>
 
 <h2>📊 Partite registrate</h2>
 <div id="gamesTableWrapper">
@@ -80,8 +83,8 @@ canvas { background:#fff; border-radius:12px; padding:10px; margin-top:16px; }
 <h3>Modifica partita</h3>
 <input type="date" id="editDate">
 <div id="editInputs"></div>
-<button onclick="saveEdit()">Salva modifica</button>
-<button onclick="cancelEdit()" style="background:#ef4444;">Annulla</button>
+<button onclick="saveEdit()" style="background:#22c55e;color:#fff;">Salva modifica</button>
+<button onclick="cancelEdit()" style="background:#ef4444;color:#fff;">Annulla</button>
 </div>
 
 <h2>🏆 Classifica totale (€)</h2>
@@ -92,12 +95,12 @@ canvas { background:#fff; border-radius:12px; padding:10px; margin-top:16px; }
 
 <script>
 const players=[
-  {name:"Chirurgo", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker-tracker/main/chirurgo.png?v=1"},
-  {name:"Professore", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker-tracker/main/professore.png?v=1"},
-  {name:"Barellista", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker-tracker/main/barellista.png?v=1"},
-  {name:"Anestesista", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker-tracker/main/anestesista.jpg?v=1"},
-  {name:"Radiografo", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker-tracker/main/radiografo.jpg?v=1"},
-  {name:"Caposala", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker-tracker/main/caposala.jpg?v=1"}
+  {name:"Chirurgo", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker/main/chirurgo.jpg"},
+  {name:"Professore", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker/main/professore.jpg"},
+  {name:"Barellista", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker/main/barellista.jpg"},
+  {name:"Anestesista", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker/main/anestesista.jpg"},
+  {name:"Radiografo", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker/main/radiografo.jpg"},
+  {name:"Caposala", avatar:"https://raw.githubusercontent.com/ytvvhprzyz-stack/Poker/main/caposala.jpg"}
 ];
 
 let data=JSON.parse(localStorage.getItem("pokerData")||"[]");
@@ -203,8 +206,8 @@ function renderTable(){
         <td>${d.player}</td>
         <td class="${d.value>=0?'valuePositive':'valueNegative'}">${d.value}</td>
         <td>
-          <button onclick="startEdit(${i})">Modifica</button>
-          <button onclick="deleteGame(${i})" style="background:#ef4444;">Elimina</button>
+          <button class="editBtn" onclick="startEdit(${i})">Modifica</button>
+          <button class="delBtn" onclick="deleteGame(${i})">Elimina</button>
         </td>
       </tr>`;
     });
