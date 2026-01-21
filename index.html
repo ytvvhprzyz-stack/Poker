@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poker Tracker – Clinica Assenteisti</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto;background:#f2f2f7;margin:0;padding:15px}
+h1,h2{text-align:center;margin:10px 0}
+.card{background:#fff;border-radius:14px;padding:15px;margin-bottom:20px;box-shadow:0 4px 10px rgba(0,0,0,.06)}
+.card.full{padding-left:6px;padding-right:6px}
+.player-row{display:flex;align-items:center;margin-bottom:10px}
+.player-row img{width:36px;height:36px;border-radius:50%;margin-right:10px}
+.player-row span{flex:1;font-weight:600}
+.player-row input{width:70px;padding:6px;font-size:16px;text-align:right}
+button{width:100%;padding:12px;border:none;border-radius:10px;background:#007aff;color:#fff;font-size:16px;font-weight:600;margin-top:10px}
+button.red{background:#ef4444}
+button.green{background:#22c55e}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:6px;border-bottom:1px solid #ddd;text-align:center}
+.valuePositive{color:#22c55e;font-weight:700}
+.valueNegative{color:#ef4444;font-weight:700}
+.badge{background:#facc15;padding:2px 6px;border-radius:6px;font-size:11px;margin-left:4px}
+.winnerRow{background:#fff7cc}
+.player-img-small{width:22px;height:22px;border-radius:50%;vertical-align:middle;margin-right:6px}
+canvas{width:100%;border-radius:12px;margin-top:10px}
+.actions button{width:auto;padding:6px 10px;font-size:12px;margin:2px}
+</style>
+</head>
+
+<body>
+
+<h1>♠️ Poker Tracker</h1>
+<div style="text-align:center;margin-bottom:15px">
+<img src="logo.png" style="max-width:260px;width:100%;border-radius:14px">
+</div>
+
+<div class="card">
+<h2>Inserisci / modifica partita</h2>
+<div id="inputs"></div>
+<button onclick="saveMatch()">Salva partita</button>
+</div>
+
+<div class="card full">
+<h2>Partite registrate</h2>
+<table id="matchesTable"></table>
+<button class="green" onclick="downloadImage()">⬇️ Scarica immagine ultima partita</button>
+<canvas id="shareCanvas"></canvas>
+</div>
+
+<div class="card">
+<h2>Classifica totale</h2>
+<table id="ranking"></table>
+</div>
+
+<script>
+const players=[
+{name:"Chirurgo",avatar:"chirurgo.jpg"},
+{name:"Professore",avatar:"professore.jpg"},
+{name:"Barellista",avatar:"barellista.jpg"},
+{name:"Anestesista",avatar:"anestesista.jpg"},
+{name:"Radiografo",avatar:"radiografo.jpg"},
+{name:"Caposala",avatar:"caposala.jpg"}
+];
+
+let matches=JSON.parse(localStorage.getItem("matches")||"[]");
+let editIndex=null;
+
+const inputs=document.getElementById("inputs");
+players.forEach(p=>{
+inputs.innerHTML+=`
+<div class="player-row">
+<img src="${p.avatar}">
+<span>${p.name}</span>
+<input type="number" id="${p.name}" value="0">
+</div>`;
+});
+
+function saveMatch(){
+let match={date:new Date().toLocaleString(),results:{}};
+let sum=0;
+players.forEach(p=>{
+let v=parseInt(document.getElementById(p.name).value)||0;
+match.results[p.name]=v;
+sum+=v;
+});
+if(sum!==0){alert("La somma deve essere 0");return;}
+
+if(editIndex!==null){
+matches[editIndex]=match;
+editIndex=null;
+}else{
+matches.push(match);
+}
+localStorage.setItem("matches",JSON.stringify(matches));
+players.forEach(p=>document.getElementById(p.name).value=0);
+renderAll();
+}
+
+function editMatch(i){
+editIndex=i;
+let m=matches[i];
+players.forEach(p=>document.getElementById(p.name).value=m.results[p.name]);
+window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function deleteMatch(i){
+if(!confirm("Eliminare questa partita?"))return;
+matches.splice(i,1);
+localStorage.setItem("matches",JSON.stringify(matches));
+renderAll();
+}
+
+function renderAll(){renderTable();renderRanking();}
+
+function renderTable(){
+let t=document.getElementById("matchesTable");
+let h="<tr><th>Data</th>";
+players.forEach(p=>h+=`<th>${p.name}</th>`);
+h+="<th>Azioni</th></tr>";
+
+matches.forEach((m,i)=>{
+let max=Math.max(...Object.values(m.results));
+h+=`<tr class="${i===matches.length-1?'winnerRow':''}"><td>${m.date}</td>`;
+players.forEach(p=>{
+let v=m.results[p.name];
+let badge=(v===max&&max>0)?"<span class='badge'>🏆</span>":"";
+h+=`<td class="${v>0?'valuePositive':v<0?'valueNegative':''}">${v}${badge}</td>`;
+});
+h+=`<td class="actions">
+<button onclick="editMatch(${i})">✏️</button>
+<button class="red" onclick="deleteMatch(${i})">🗑</button>
+</td></tr>`;
+});
+t.innerHTML=h;
+}
+
+function renderRanking(){
+let totals={};
+players.forEach(p=>totals[p.name]=0);
+matches.forEach(m=>players.forEach(p=>totals[p.name]+=m.results[p.name]));
+let r=Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+let h="<tr><th>Giocatore</th><th>Saldo</th></tr>";
+r.forEach((e,i)=>{
+let pl=players.find(p=>p.name===e[0]);
+h+=`<tr class="${i===0?'winnerRow':''}">
+<td><img src="${pl.avatar}" class="player-img-small">${e[0]} ${i===0?'🏆':''}</td>
+<td>${e[1]}</td></tr>`;
+});
+ranking.innerHTML=h;
+}
+
+function downloadImage(){
+if(!matches.length)return;
+let m=matches[matches.length-1];
+let totals={};
+players.forEach(p=>totals[p.name]=0);
+matches.forEach(mm=>players.forEach(p=>totals[p.name]+=mm.results[p.name]));
+let rankingArr=Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+
+let c=document.getElementById("shareCanvas");
+let ctx=c.getContext("2d");
+c.width=360;c.height=620;
+ctx.fillStyle="#ffffff";ctx.fillRect(0,0,c.width,c.height);
+
+let logo=new Image();logo.src="logo.png";
+logo.onload=function(){
+ctx.drawImage(logo,30,10,300,140);
+ctx.fillStyle="#000";ctx.font="bold 14px system-ui";
+ctx.fillText("Ultima partita",20,170);
+ctx.font="12px system-ui";
+ctx.fillText(m.date,20,188);
+
+let y=215;
+let max=Math.max(...Object.values(m.results));
+players.forEach(p=>{
+ctx.font=(m.results[p.name]===max&&max>0)?"bold 15px system-ui":"14px system-ui";
+ctx.fillText(p.name+": "+m.results[p.name]+"€"+((m.results[p.name]===max&&max>0)?" 🏆":""),20,y);
+y+=24;
+});
+
+y+=10;
+ctx.font="bold 15px system-ui";
+ctx.fillText("Classifica generale",20,y);
+y+=26;
+
+rankingArr.forEach((r,i)=>{
+ctx.font=i===0?"bold 14px system-ui":"14px system-ui";
+ctx.fillText((i+1)+". "+r[0]+" "+r[1]+"€"+(i===0?" 🏆":""),20,y);
+y+=22;
+});
+
+let link=document.createElement("a");
+link.download="clinica-assenteisti-ultima-partita.png";
+link.href=c.toDataURL("image/png");
+link.click();
+};
+}
+
+renderAll();
+</script>
+</body>
+</html>
